@@ -1,0 +1,590 @@
+{literal}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>颜色转换工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .color-preview {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .preview-box {
+            width: 100%;
+            height: 200px;
+            background-color: #3498db;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .color-values {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .color-value {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .value-label {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .value-code {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .convert-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Courier New', Courier, monospace;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+            outline: none;
+        }
+        
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .preset-colors {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .preset-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 10px;
+        }
+        
+        .preset-color {
+            width: 60px;
+            height: 60px;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .preset-color:hover {
+            transform: scale(1.1);
+            border-color: #3498db;
+        }
+        
+        @media (max-width: 768px) {
+            .color-values {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .toolbar {
+                flex-direction: column;
+            }
+            
+            .preset-grid {
+                grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            }
+            
+            .preset-color {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>颜色转换工具</h1>
+        
+        <div class="color-preview">
+            <div class="preview-box" id="previewBox"></div>
+            <div class="color-values">
+                <div class="color-value">
+                    <span class="value-label">HEX：</span>
+                    <span class="value-code" id="hexValue">#3498db</span>
+                </div>
+                <div class="color-value">
+                    <span class="value-label">RGB：</span>
+                    <span class="value-code" id="rgbValue">rgb(52, 152, 219)</span>
+                </div>
+                <div class="color-value">
+                    <span class="value-label">HSL：</span>
+                    <span class="value-code" id="hslValue">hsl(204, 70%, 53%)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="convert-section">
+            <div class="section-title">颜色格式转换</div>
+            
+            <div class="input-grid">
+                <div class="input-group">
+                    <label for="hexInput">HEX颜色：</label>
+                    <input type="text" id="hexInput" placeholder="如：#3498db 或 3498db" value="#3498db" oninput="convertFromHex()" />
+                </div>
+                <div class="input-group">
+                    <label for="rgbInput">RGB颜色：</label>
+                    <input type="text" id="rgbInput" placeholder="如：rgb(52, 152, 219)" value="rgb(52, 152, 219)" oninput="convertFromRgb()" />
+                </div>
+                <div class="input-group">
+                    <label for="hslInput">HSL颜色：</label>
+                    <input type="text" id="hslInput" placeholder="如：hsl(204, 70%, 53%)" value="hsl(204, 70%, 53%)" oninput="convertFromHsl()" />
+                </div>
+            </div>
+            
+            <div class="toolbar">
+                <button class="btn btn-primary" onclick="generateRandomColor()">生成随机颜色</button>
+                <button class="btn btn-success" onclick="copyAllValues()">复制所有值</button>
+                <button class="btn btn-danger" onclick="resetToDefault()">重置默认</button>
+            </div>
+            
+            <div id="status" class="status" style="display: none;"></div>
+        </div>
+        
+        <div class="preset-colors">
+            <div class="preset-title">预设颜色</div>
+            <div class="preset-grid" id="presetGrid">
+                <!-- 预设颜色将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 预设颜色列表
+        const presetColors = [
+            '#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6',
+            '#1abc9c', '#34495e', '#e67e22', '#95a5a6', '#d35400',
+            '#27ae60', '#c0392b', '#8e44ad', '#16a085', '#2c3e50',
+            '#f1c40f', '#e87e04', '#bdc3c7', '#7f8c8d', '#3498db'
+        ];
+        
+        // 当前颜色值
+        let currentColor = {
+            hex: '#3498db',
+            rgb: { r: 52, g: 152, b: 219 },
+            hsl: { h: 204, s: 70, l: 53 }
+        };
+        
+        // 生成预设颜色
+        function loadPresetColors() {
+            const grid = document.getElementById('presetGrid');
+            presetColors.forEach(color => {
+                const div = document.createElement('div');
+                div.className = 'preset-color';
+                div.style.backgroundColor = color;
+                div.title = color;
+                div.onclick = () => setColor(color);
+                grid.appendChild(div);
+            });
+        }
+        
+        // 更新颜色显示
+        function updateColorDisplay() {
+            // 更新预览框
+            document.getElementById('previewBox').style.backgroundColor = currentColor.hex;
+            
+            // 更新颜色值显示
+            document.getElementById('hexValue').textContent = currentColor.hex;
+            document.getElementById('rgbValue').textContent = `rgb(${currentColor.rgb.r}, ${currentColor.rgb.g}, ${currentColor.rgb.b})`;
+            document.getElementById('hslValue').textContent = `hsl(${currentColor.hsl.h}, ${currentColor.hsl.s}%, ${currentColor.hsl.l}%)`;
+            
+            // 更新输入框
+            document.getElementById('hexInput').value = currentColor.hex;
+            document.getElementById('rgbInput').value = `rgb(${currentColor.rgb.r}, ${currentColor.rgb.g}, ${currentColor.rgb.b})`;
+            document.getElementById('hslInput').value = `hsl(${currentColor.hsl.h}, ${currentColor.hsl.s}%, ${currentColor.hsl.l}%)`;
+        }
+        
+        // 显示状态信息
+        function showStatus(message, type = 'success') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+        
+        // HEX转RGB
+        function hexToRgb(hex) {
+            // 移除#号
+            hex = hex.replace('#', '');
+            
+            // 处理3位和6位HEX
+            if (hex.length === 3) {
+                hex = hex.split('').map(char => char + char).join('');
+            }
+            
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            
+            return { r, g, b };
+        }
+        
+        // RGB转HSL
+        function rgbToHsl(r, g, b) {
+            r /= 255;
+            g /= 255;
+            b /= 255;
+            
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                
+                h = Math.round(h * 60);
+            }
+            
+            s = Math.round(s * 100);
+            l = Math.round(l * 100);
+            
+            return { h, s, l };
+        }
+        
+        // RGB转HEX
+        function rgbToHex(r, g, b) {
+            const toHex = n => {
+                const hex = n.toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            };
+            
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+        }
+        
+        // HSL转RGB
+        function hslToRgb(h, s, l) {
+            s /= 100;
+            l /= 100;
+            
+            const c = (1 - Math.abs(2 * l - 1)) * s;
+            const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+            const m = l - c / 2;
+            
+            let r, g, b;
+            
+            if (0 <= h && h < 60) {
+                r = c; g = x; b = 0;
+            } else if (60 <= h && h < 120) {
+                r = x; g = c; b = 0;
+            } else if (120 <= h && h < 180) {
+                r = 0; g = c; b = x;
+            } else if (180 <= h && h < 240) {
+                r = 0; g = x; b = c;
+            } else if (240 <= h && h < 300) {
+                r = x; g = 0; b = c;
+            } else {
+                r = c; g = 0; b = x;
+            }
+            
+            r = Math.round((r + m) * 255);
+            g = Math.round((g + m) * 255);
+            b = Math.round((b + m) * 255);
+            
+            return { r, g, b };
+        }
+        
+        // 从HEX输入转换
+        function convertFromHex() {
+            const input = document.getElementById('hexInput').value.trim();
+            
+            if (!/^#?[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/.test(input)) {
+                showStatus('请输入有效的HEX颜色格式', 'error');
+                return;
+            }
+            
+            const hex = input.startsWith('#') ? input.toUpperCase() : `#${input}`.toUpperCase();
+            const rgb = hexToRgb(hex);
+            const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+            
+            currentColor = { hex, rgb, hsl };
+            updateColorDisplay();
+        }
+        
+        // 从RGB输入转换
+        function convertFromRgb() {
+            const input = document.getElementById('rgbInput').value.trim();
+            const match = input.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+            
+            if (!match) {
+                showStatus('请输入有效的RGB颜色格式，如：rgb(255, 0, 0)', 'error');
+                return;
+            }
+            
+            const r = parseInt(match[1]);
+            const g = parseInt(match[2]);
+            const b = parseInt(match[3]);
+            
+            if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
+                showStatus('RGB值必须在0-255之间', 'error');
+                return;
+            }
+            
+            const rgb = { r, g, b };
+            const hex = rgbToHex(r, g, b);
+            const hsl = rgbToHsl(r, g, b);
+            
+            currentColor = { hex, rgb, hsl };
+            updateColorDisplay();
+        }
+        
+        // 从HSL输入转换
+        function convertFromHsl() {
+            const input = document.getElementById('hslInput').value.trim();
+            const match = input.match(/^hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)$/);
+            
+            if (!match) {
+                showStatus('请输入有效的HSL颜色格式，如：hsl(0, 100%, 50%)', 'error');
+                return;
+            }
+            
+            const h = parseInt(match[1]);
+            const s = parseInt(match[2]);
+            const l = parseInt(match[3]);
+            
+            if (h < 0 || h > 360 || s < 0 || s > 100 || l < 0 || l > 100) {
+                showStatus('HSL值范围：H(0-360), S(0-100%), L(0-100%)', 'error');
+                return;
+            }
+            
+            const hsl = { h, s, l };
+            const rgb = hslToRgb(h, s, l);
+            const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+            
+            currentColor = { hex, rgb, hsl };
+            updateColorDisplay();
+        }
+        
+        // 设置颜色
+        function setColor(hex) {
+            document.getElementById('hexInput').value = hex;
+            convertFromHex();
+        }
+        
+        // 生成随机颜色
+        function generateRandomColor() {
+            const randomHex = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`.toUpperCase();
+            setColor(randomHex);
+        }
+        
+        // 复制所有颜色值
+        async function copyAllValues() {
+            const values = `HEX: ${currentColor.hex}\nRGB: rgb(${currentColor.rgb.r}, ${currentColor.rgb.g}, ${currentColor.rgb.b})\nHSL: hsl(${currentColor.hsl.h}, ${currentColor.hsl.s}%, ${currentColor.hsl.l}%)`;
+            
+            try {
+                await navigator.clipboard.writeText(values);
+                showStatus('所有颜色值已复制到剪贴板', 'success');
+            } catch (error) {
+                // 降级方案
+                const textArea = document.createElement('textarea');
+                textArea.value = values;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    showStatus('所有颜色值已复制到剪贴板', 'success');
+                } catch (err) {
+                    showStatus('复制失败，请手动复制', 'error');
+                }
+                
+                document.body.removeChild(textArea);
+            }
+        }
+        
+        // 重置默认
+        function resetToDefault() {
+            setColor('#3498db');
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPresetColors();
+            updateColorDisplay();
+        });
+    </script>
+</body>
+</html>
+{/literal}

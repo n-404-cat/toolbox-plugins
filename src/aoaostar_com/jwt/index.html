@@ -1,0 +1,587 @@
+{extend name="layout/plugin_layout" /}
+
+{block name="title"}{$plugin.title} - {$app.title}{/block}
+
+{block name="head"}
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.jwt-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.jwt-input-section {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.jwt-result-section {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.jwt-tabs {
+    margin-bottom: 20px;
+}
+.jwt-tab {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    margin-right: 5px;
+}
+.jwt-tab.active {
+    background: #3b82f6;
+    color: #fff;
+}
+.jwt-content {
+    display: none;
+}
+.jwt-content.active {
+    display: block;
+}
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+.form-group textarea {
+    height: 100px;
+    resize: vertical;
+}
+/* .btn {
+    padding: 10px 20px;
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 10px;
+}
+.btn:hover {
+    background: #2563eb;
+} */
+.btn-secondary {
+    background: #6b7280;
+}
+.btn-secondary:hover {
+    background: #4b5563;
+}
+.result-item {
+    margin-bottom: 20px;
+}
+.result-item h3 {
+    margin-bottom: 10px;
+    color: #374151;
+    font-size: 16px;
+}
+.result-content {
+    background: #f9fafb;
+    padding: 15px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: monospace;
+    font-size: 14px;
+}
+.result-content textarea {
+    width: 100%;
+}
+.token-part {
+    margin-bottom: 15px;
+}
+.token-part h4 {
+    margin-bottom: 8px;
+    color: #4b5563;
+    font-size: 14px;
+}
+.json-view {
+    background: #f3f4f6;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+.json-key {
+    color: #059669;
+    font-weight: bold;
+}
+.json-string {
+    color: #d97706;
+}
+.json-number {
+    color: #2563eb;
+}
+.json-boolean {
+    color: #7c3aed;
+}
+.json-null {
+    color: #6b7280;
+}
+.time-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    border-bottom: 1px dotted #6b7280;
+}
+.time-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: #374151;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1000;
+    top: 50%;
+    left: 105%;
+    margin-left: 0;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+    font-family: sans-serif;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.time-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+.error {
+    color: #ef4444;
+    background: #fee2e2;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+.success {
+    color: #10b981;
+    background: #d1fae5;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+.tab-content {
+    padding: 20px 0;
+}
+</style>
+{/block}
+{block name="main"}
+<div class="container mx-auto" id="app">
+    <div class="jwt-container">
+        <!-- 标签页 -->
+        <div class="jwt-tabs">
+            <button class="jwt-tab active" @click="switchTab('decode')">JWT解析</button>
+            <button class="jwt-tab" @click="switchTab('generate')">生成JWT</button>
+            <button class="jwt-tab" @click="switchTab('validate')">验证JWT</button>
+        </div>
+        
+        <!-- 解析JWT -->
+        <div class="jwt-content active" id="decode">
+            <div class="jwt-input-section">
+                <h2>JWT解析</h2>
+                
+                <div class="form-group">
+                    <label for="token">JWT令牌</label>
+                    <textarea id="token" v-model="decodeForm.token" placeholder="请输入JWT令牌"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="key">密钥（可选）</label>
+                    <input type="text" id="key" v-model="decodeForm.key" placeholder="请输入密钥，用于验证签名">
+                </div>
+                
+                <div class="form-group">
+                    <label for="algorithm">算法</label>
+                    <select id="algorithm" v-model="decodeForm.algorithm">
+                        <option value="HS256">HS256</option>
+                        <option value="HS384">HS384</option>
+                        <option value="HS512">HS512</option>
+                        <option value="RS256">RS256</option>
+                        <option value="RS384">RS384</option>
+                        <option value="RS512">RS512</option>
+                    </select>
+                </div>
+                
+                <button class="btn" @click="decodeJwt">解析JWT</button>
+                <button class="btn btn-secondary" @click="clearDecode">清空</button>
+            </div>
+            
+            <!-- 解析结果 -->
+            <div class="jwt-result-section" v-if="decodeResult">
+                <h2>解析结果</h2>
+                
+                <div class="result-item">
+                    <h3>签名状态</h3>
+                    <div class="result-content">
+                        <span v-if="decodeResult.signature_valid === true" style="color: #10b981;">✓ 签名有效</span>
+                        <span v-else-if="decodeResult.signature_valid === false" style="color: #ef4444;">✗ 签名无效</span>
+                        <span v-else>ℹ️ 未验证签名</span>
+                    </div>
+                </div>
+                
+                <div class="result-item">
+                    <h3>Header</h3>
+                    <div class="result-content">
+                        <pre><code>{{ formatJson(decodeResult.header) }}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="result-item">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3>Payload</h3>
+                        <button class="btn btn-xs btn-secondary" @click="toggleFormat('payload')">{{ formatType.payload ? '压缩视图' : '格式化视图' }}</button>
+                    </div>
+                    <div class="result-content">
+                        <div v-if="formatType.payload" class="json-view" v-html="renderJson(decodeResult.payload)"></div>
+                        <pre v-else><code>{{ formatJson(decodeResult.payload) }}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="result-item">
+                    <h3>Signature</h3>
+                    <div class="result-content">{{ decodeResult.signature }}</div>
+                </div>
+            </div>
+            
+            <!-- 错误信息 -->
+            <div class="error" v-if="errorMessage">{{ errorMessage }}</div>
+        </div>
+        
+        <!-- 生成JWT -->
+        <div class="jwt-content" id="generate">
+            <div class="jwt-input-section">
+                <h2>生成JWT</h2>
+                
+                <div class="form-group">
+                    <label for="payload">Payload JSON</label>
+                    <textarea id="payload" v-model="generateForm.payload" placeholder='{
+  "sub": "1234567890",
+  "name": "John Doe",
+  "iat": 1516239022
+}'></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="gen-key">密钥</label>
+                    <input type="text" id="gen-key" v-model="generateForm.key" placeholder="请输入密钥">
+                </div>
+                
+                <div class="form-group">
+                    <label for="gen-algorithm">算法</label>
+                    <select id="gen-algorithm" v-model="generateForm.algorithm">
+                        <option value="HS256">HS256</option>
+                        <option value="HS384">HS384</option>
+                        <option value="HS512">HS512</option>
+                    </select>
+                </div>
+                
+                <button class="btn" @click="generateJwt">生成JWT</button>
+                <button class="btn btn-secondary" @click="clearGenerate">清空</button>
+            </div>
+            
+            <!-- 生成结果 -->
+            <div class="jwt-result-section" v-if="generateResult">
+                <h2>生成结果</h2>
+                <div class="result-content">
+                    <textarea rows="5" readonly>{{ generateResult.token }}</textarea>
+                </div>
+            </div>
+            
+            <!-- 错误信息 -->
+            <div class="error" v-if="errorMessage">{{ errorMessage }}</div>
+            <div class="success" v-if="successMessage">{{ successMessage }}</div>
+        </div>
+        
+        <!-- 验证JWT -->
+        <div class="jwt-content" id="validate">
+            <div class="jwt-input-section">
+                <h2>验证JWT</h2>
+                
+                <div class="form-group">
+                    <label for="validate-token">JWT令牌</label>
+                    <textarea id="validate-token" v-model="validateForm.token" placeholder="请输入JWT令牌"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="validate-key">密钥</label>
+                    <input type="text" id="validate-key" v-model="validateForm.key" placeholder="请输入密钥">
+                </div>
+                
+                <div class="form-group">
+                    <label for="validate-algorithm">算法</label>
+                    <select id="validate-algorithm" v-model="validateForm.algorithm">
+                        <option value="HS256">HS256</option>
+                        <option value="HS384">HS384</option>
+                        <option value="HS512">HS512</option>
+                        <option value="RS256">RS256</option>
+                        <option value="RS384">RS384</option>
+                        <option value="RS512">RS512</option>
+                    </select>
+                </div>
+                
+                <button class="btn" @click="validateJwt">验证JWT</button>
+                <button class="btn btn-secondary" @click="clearValidate">清空</button>
+            </div>
+            
+            <!-- 验证结果 -->
+            <div class="jwt-result-section" v-if="validateResult">
+                <h2>验证结果</h2>
+                <div class="result-content">
+                    <div v-if="validateResult.valid" style="color: #10b981;">✓ JWT验证通过</div>
+                    <div v-else style="color: #ef4444;">✗ JWT验证失败：{{ validateResult.message }}</div>
+                    
+                    <div v-if="validateResult.data" style="margin-top: 15px;">
+                        <h4>Payload数据：</h4>
+                        <div class="json-view jwt-validate-json" v-html="renderJson(validateResult.data)"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 错误信息 -->
+            <div class="error" v-if="errorMessage">{{ errorMessage }}</div>
+        </div>
+    </div>
+</div>
+
+<!--<script src="/static/lib/vue/2.6.14/vue.min.js"></script>-->
+<!--<script src="/static/lib/axios/0.21.1/axios.min.js"></script>-->
+<script src="/static/http.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            activeTab: 'decode',
+            decodeForm: {
+                token: '',
+                key: '',
+                algorithm: 'HS256'
+            },
+            decodeResult: null,
+            generateForm: {
+                payload: `{
+  "sub": "1234567890",
+  "name": "John Doe",
+  "iat": 1516239022
+}`,
+                key: '',
+                algorithm: 'HS256'
+            },
+            generateResult: null,
+            validateForm: {
+                token: '',
+                key: '',
+                algorithm: 'HS256'
+            },
+            validateResult: null,
+            errorMessage: '',
+            successMessage: '',
+            formatType: {
+                payload: true
+            }
+        },
+        methods: {
+            switchTab(tab) {
+                this.activeTab = tab;
+                // 隐藏所有内容
+                document.querySelectorAll('.jwt-content').forEach(function(el) {
+                    el.classList.remove('active');
+                });
+                // 显示当前内容
+                document.getElementById(tab).classList.add('active');
+                // 隐藏所有标签的active状态
+                document.querySelectorAll('.jwt-tab').forEach(function(el) {
+                    el.classList.remove('active');
+                });
+                // 显示当前标签的active状态
+                event.target.classList.add('active');
+            },
+            
+            // 切换格式化类型
+            toggleFormat(type) {
+                this.formatType[type] = !this.formatType[type];
+            },
+            
+            // 解析JWT
+            decodeJwt() {
+                this.errorMessage = '';
+                this.decodeResult = null;
+                
+                const loading = $message.loading('正在解析中');
+                return httpPost('/api/{$plugin.alias}', {
+                    token: this.decodeForm.token,
+                    key: this.decodeForm.key,
+                    algorithm: this.decodeForm.algorithm
+                }).then(res => {
+                    if (res.status === 'ok') {
+                        this.decodeResult = res.data;
+                    } else {
+                        this.errorMessage = res.message;
+                    }
+                }).catch(err => {
+                    this.errorMessage = '请求失败：' + err.message;
+                }).finally(() => loading.close());
+            },
+            
+            // 生成JWT
+            generateJwt() {
+                this.errorMessage = '';
+                this.successMessage = '';
+                this.generateResult = null;
+                
+                try {
+                    JSON.parse(this.generateForm.payload);
+                } catch (e) {
+                    this.errorMessage = 'Payload不是有效的JSON格式';
+                    return;
+                }
+                
+                const loading = $message.loading('正在生成中');
+                return httpPost('/api/{$plugin.alias}/Generate', {
+                    payload: this.generateForm.payload,
+                    key: this.generateForm.key,
+                    algorithm: this.generateForm.algorithm
+                }).then(res => {
+                    if (res.status === 'ok') {
+                        this.generateResult = res.data;
+                        this.successMessage = 'JWT生成成功';
+                    } else {
+                        this.errorMessage = res.message;
+                    }
+                }).catch(err => {
+                    this.errorMessage = '请求失败：' + err.message;
+                }).finally(() => loading.close());
+            },
+            
+            // 验证JWT
+            validateJwt() {
+                this.errorMessage = '';
+                this.validateResult = null;
+                
+                const loading = $message.loading('正在验证中');
+                return httpPost('/api/{$plugin.alias}/Validate', {
+                    token: this.validateForm.token,
+                    key: this.validateForm.key,
+                    algorithm: this.validateForm.algorithm
+                }).then(res => {
+                    if (res.status === 'ok') {
+                        this.validateResult = res.data;
+                    } else {
+                        this.errorMessage = res.message;
+                    }
+                }).catch(err => {
+                    this.errorMessage = '请求失败：' + err.message;
+                }).finally(() => loading.close());
+            },
+            
+            // 格式化JSON
+            formatJson(obj) {
+                return JSON.stringify(obj, null, 2);
+            },
+            
+            // 渲染JSON，支持时间戳tooltip
+            renderJson(obj, level = 0) {
+                let html = '';
+                const indent = '  '.repeat(level);
+                
+                if (typeof obj === 'object' && obj !== null) {
+                    if (Array.isArray(obj)) {
+                        html += '[';
+                        obj.forEach((item, index) => {
+                            html += '\n' + indent + '  ' + this.renderJson(item, level + 1);
+                            if (index < obj.length - 1) {
+                                html += ',';
+                            }
+                        });
+                        html += '\n' + indent + ']';
+                    } else {
+                        // 检查是否为时间对象
+                        if (obj.hasOwnProperty('value') && obj.hasOwnProperty('formatted') && obj.hasOwnProperty('timestamp')) {
+                            // 是时间对象，显示带tooltip的值
+                            return `<span class="time-tooltip json-number">${obj.value}<span class="tooltip-text">${obj.formatted}</span></span>`;
+                        } else {
+                            // 普通对象
+                            html += '{';
+                            const keys = Object.keys(obj);
+                            keys.forEach((key, index) => {
+                                html += '\n' + indent + '  ';
+                                html += `<span class="json-key">"${key}"</span>: `;
+                                html += this.renderJson(obj[key], level + 1);
+                                if (index < keys.length - 1) {
+                                    html += ',';
+                                }
+                            });
+                            html += '\n' + indent + '}';
+                        }
+                    }
+                } else if (typeof obj === 'string') {
+                    html += `<span class="json-string">"${obj}"</span>`;
+                } else if (typeof obj === 'number') {
+                    // 检查是否为时间戳
+                    if (String(obj).length === 10 || String(obj).length === 13) {
+                        // 可能是时间戳，显示带tooltip
+                        const timestamp = String(obj).length === 13 ? obj / 1000 : obj;
+                        const formatted = new Date(timestamp * 1000).toLocaleString();
+                        html += `<span class="time-tooltip json-number">${obj}<span class="tooltip-text">${formatted}</span></span>`;
+                    } else {
+                        html += `<span class="json-number">${obj}</span>`;
+                    }
+                } else if (typeof obj === 'boolean') {
+                    html += `<span class="json-boolean">${obj}</span>`;
+                } else if (obj === null) {
+                    html += `<span class="json-null">null</span>`;
+                }
+                
+                return html;
+            },
+            
+            // 清空解析表单
+            clearDecode() {
+                this.decodeForm.token = '';
+                this.decodeForm.key = '';
+                this.decodeResult = null;
+                this.errorMessage = '';
+            },
+            
+            // 清空生成表单
+            clearGenerate() {
+                this.generateForm.payload = `{
+  "sub": "1234567890",
+  "name": "John Doe",
+  "iat": 1516239022
+}`;
+                this.generateForm.key = '';
+                this.generateResult = null;
+                this.errorMessage = '';
+                this.successMessage = '';
+            },
+            
+            // 清空验证表单
+            clearValidate() {
+                this.validateForm.token = '';
+                this.validateForm.key = '';
+                this.validateResult = null;
+                this.errorMessage = '';
+            }
+        }
+    });
+</script>
+{/block}
